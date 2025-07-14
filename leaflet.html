@@ -106,7 +106,7 @@ let isFirstLoad = true;
   // 🔍 Fungsi zoom ke lokasi
   window.zoomTo = function(device_id) {
     const coords = deviceLocations[device_id];
-    if (coords) map.setView(coords, 18);
+    if (coords) map.flyTo(coords, 18);
   };
 
 async function getData() {
