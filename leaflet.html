@@ -5,13 +5,56 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <style>#map { height: 100vh; }</style>
+  <style>
+    #map { height: 100vh; }
+    .legend {
+      background: white;
+      padding: 10px;
+      line-height: 1.4;
+      font-size: 13px;
+      border-radius: 5px;
+      box-shadow: 1px 1px 4px rgba(0,0,0,0.3);
+    }
+    .legend a {
+      display: block;
+      color: #007bff;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .legend a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
+
 <body>
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+  const grayscale = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+  attribution: '&copy; <a href="https://carto.com/">CartoDB</a>',
+  subdomains: 'abcd',
+  maxZoom: 19
+  });
+
+
+  const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: '&copy; Esri & contributors'
+  });
+
+  const map = L.map('map', {
+    scrollWheelZoom: false,
+    layers: [satellite]
+  }).setView([-2.5, 117], 5);
+
+  const baseMaps = {
+    "Grayscale": grayscale,
+    "Satellite": satellite
+  };
+
+  L.control.layers(baseMaps).addTo(map); // tambahkan kontrol layer dropdown
+
   const token = "6fcyL0WFswuh0S8CktF0fNr7APNDXDheN1xwGgbbx6ru85dvKOUpvBuZy_Xu6u7CAP4MM7I_wHOvIDI_Wrz2rw==";
   const org = "CBilly";
   const influxURL = "https://database.flotech.co.id/api/v2/query?org=" + org;
@@ -35,16 +78,36 @@ const greenIcon = new L.Icon({
   shadowSize: [41, 41]
 });
 
-const map = L.map('map', {
-  scrollWheelZoom: false  // 🚫 Nonaktifkan zoom pakai scroll
-}).setView([-2.5, 117], 5);
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-  attribution: '&copy; OpenStreetMap contributors'
-}).addTo(map);
+
 
 let markerGroup = L.layerGroup().addTo(map);
 let isFirstLoad = true;
+
+// 📍 Lokasi tetap FM-xxx
+  const deviceLocations = {
+    "FM-001": [-6.146395, 106.894409],
+    "FM-002": [-6.143243, 106.797566],
+    "FM-003": [-6.263481, 106.813981]
+  };
+
+// 🧭 Buat legend pojok bawah
+  const legend = L.control({position: 'bottomleft'});
+  legend.onAdd = function(map) {
+    const div = L.DomUtil.create('div', 'legend');
+    div.innerHTML = '<b>Pilih Lokasi:</b><br>';
+    for (const [key, val] of Object.entries(deviceLocations)) {
+      div.innerHTML += `<a onclick="zoomTo('${key}')">${key}</a>`;
+    }
+    return div;
+  };
+  legend.addTo(map);
+
+  // 🔍 Fungsi zoom ke lokasi
+  window.zoomTo = function(device_id) {
+    const coords = deviceLocations[device_id];
+    if (coords) map.setView(coords, 18);
+  };
 
 async function getData() {
   const res = await fetch(influxURL, {
@@ -91,8 +154,13 @@ async function updateMap() {
     if (!isFinite(d.lat) || !isFinite(d.lon)) return;
 
     // Marker titik utama
-    const marker = L.marker([d.lat, d.lon], { icon: greenIcon });
+    const marker = L.marker([d.lat, d.lon], { icon: greenIcon })
+    .on('click', () => {
+    map.flyTo([d.lat, d.lon], 18); // zoom to marker when clicked
+    });
+
     markerGroup.addLayer(marker);
+
     
 
     // Tooltip abu-abu semi transparan (seperti text box)
