@@ -95,7 +95,7 @@ let isFirstLoad = true;
   const legend = L.control({position: 'bottomleft'});
   legend.onAdd = function(map) {
     const div = L.DomUtil.create('div', 'legend');
-    div.innerHTML = '<b>Pilih Lokasi:</b><br>';
+    div.innerHTML = '<b>Choose Location:</b><br>';
     for (const [key, val] of Object.entries(deviceLocations)) {
       div.innerHTML += `<a onclick="zoomTo('${key}')">${key}</a>`;
     }
