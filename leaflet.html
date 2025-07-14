@@ -6,6 +6,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
+    html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    }
+
     #map { height: 100vh; }
     .legend {
       background: white;
@@ -208,7 +214,12 @@ const label = L.marker([d.lat, d.lon], {
   });
 
   if (isFirstLoad && bounds.length > 0) {
-    map.fitBounds(bounds, { padding: [50, 50] });
+    //map.fitBounds(bounds, { padding: [50, 50] });
+    map.fitBounds(bounds, {
+    paddingTopLeft: [50, 50],
+    paddingBottomRight: [50, 150]  // tambahkan ekstra ruang di bawah
+    });
+
     isFirstLoad = false;
   }
 }
