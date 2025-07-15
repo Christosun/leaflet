@@ -123,21 +123,7 @@
 
 map.addControl(new homeControl());
 
-
-
-  const token = "6fcyL0WFswuh0S8CktF0fNr7APNDXDheN1xwGgbbx6ru85dvKOUpvBuZy_Xu6u7CAP4MM7I_wHOvIDI_Wrz2rw==";
-  const org = "CBilly";
-  const influxURL = "https://database.flotech.co.id/api/v2/query?org=" + org;
-
-const fluxQuery = `
-from(bucket: "noderedmqtt")
-  |> range(start: -1h)
-  |> filter(fn: (r) => r._measurement == "FlowmeterMQTTclean")
-  |> filter(fn: (r) => r._field == "Flowrate" or r._field == "lat" or r._field == "lon" or r._field == "Totalizer")
-  |> group(columns: ["device_id", "_field"])
-  |> last()
-  |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-`;
+const apiEndpoint = "https://backend.flotech.co.id/flowdata";
 
 const greenIcon = new L.Icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
@@ -181,40 +167,21 @@ let isFirstLoad = true;
   };
 
 async function getData() {
-  const res = await fetch(influxURL, {
-    method: "POST",
-    headers: {
-      "Authorization": "Token " + token,
-      "Content-Type": "application/vnd.flux"
-    },
-    body: fluxQuery
-  });
+  const res = await fetch(apiEndpoint);
+  const data = await res.json();
 
-  const text = await res.text();
-  const rows = text.trim().split("\n").filter(l => !l.startsWith("#"));
-const sensors = [];
-
-for (const row of rows) {
-  const cols = row.split(",").map(c => c.trim()); // ✨ trim hilangkan \r
-
-  // Lewatkan header atau baris tidak valid
-  if (cols[6] === "device_id" || cols.length < 11) continue;
-
-  sensors.push({
-    device_id: cols[6],
-    Flowrate: parseFloat(cols[7]),
-    Totalizer: parseFloat(cols[8]),
-    lat: parseFloat(cols[9]),
-    lon: parseFloat(cols[10]),
-    _time: cols[5]  // <= tambahkan ini!
-  });
+  // filter dan susun ulang data jika perlu
+  return data.map(d => ({
+    device_id: d.device_id,
+    Flowrate: d.Flowrate,
+    Totalizer: d.Totalizer,
+    lat: d.lat,
+    lon: d.lon,
+    _time: d._time
+  }));
 }
 
-
-
-  return sensors;
-}
-
+  
 async function updateMap() {
   const data = await getData();
   markerGroup.clearLayers();
