@@ -82,7 +82,7 @@
       transform: scale(1);
       transition: all 0.25s ease;
       border: 1px solid rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(6px);
+      backdrop-filter: blur(4px);
       min-width: 170px;
       position: relative;
       z-index: 1; /* default semua di belakang */
@@ -99,7 +99,7 @@
       font-weight: bold;
       font-size: 14px;
       margin-bottom: 8px;
-      color: #4ade80; /* hijau neon */
+      color: #59c280; /* hijau neon */
     }
 
     .custom-label .info-row {
@@ -260,15 +260,15 @@ async function updateMap() {
           id="label-${d.device_id}">
         <div class="device-id">${d.device_id}</div>
         <div class="info-row">
-          <span class="label">Flowrate</span>
+          <span class="label">Flowrate:</span>
           <span class="value">${d.Flowrate.toFixed(2)} l/s</span>
         </div>
         <div class="info-row">
-          <span class="label">Totalizer</span>
+          <span class="label">Totalizer:</span>
           <span class="value">${d.Totalizer.toFixed(0)} m³</span>
         </div>
         <div class="info-row">
-          <span class="label">Time</span>
+          <span class="label">Time:</span>
           <span class="value">${new Date(d._time).toLocaleString('id-ID')}</span>
         </div>
       </div>
