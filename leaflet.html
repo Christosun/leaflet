@@ -69,7 +69,25 @@
     .leaflet-control-home:hover {
       background-color: #f0f0f0;
     }
+    .custom-label {
+      background-color: rgba(50, 50, 50, 0.8);
+      padding: 10px 14px;
+      border-radius: 6px;
+      color: white;
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 13px;
+      box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
+      display: inline-block;
+      text-align: left;
+      transform: scale(1);
+      transition: transform 0.2s ease;
+    }
 
+    .custom-label.hovered {
+      transform: scale(1.2);
+      z-index: 9999;
+    }
+    
 
   </style>
 </head>
@@ -139,6 +157,9 @@ const greenIcon = new L.Icon({
 
 let markerGroup = L.layerGroup().addTo(map);
 let isFirstLoad = true;
+let hoveredDevice = null; // simpan device_id yang sedang di-hover
+
+
 
 // 📍 Lokasi tetap FM-xxx
   const deviceLocations = {
@@ -194,71 +215,86 @@ async function updateMap() {
   data.forEach(d => {
     if (!isFinite(d.lat) || !isFinite(d.lon)) return;
 
-    // Marker titik utama
     const marker = L.marker([d.lat, d.lon], { icon: greenIcon })
+      .on('click', () => {
+        map.flyTo([d.lat, d.lon], 18);
+      });
+
+    const labelHTML = `
+      <div class="custom-label ${hoveredDevice === d.device_id ? 'hovered' : ''}" 
+          id="label-${d.device_id}">
+        <div style="font-weight: bold; margin-bottom: 6px;">${d.device_id}</div>
+        <div style="display: flex;">
+          <div style="margin-right: 8px;">
+            Flowrate:<br>
+            Totalizer:<br>
+            Time:
+          </div>
+          <div>
+            ${d.Flowrate.toFixed(2)}&nbsp;l/s<br>
+            ${d.Totalizer.toFixed(0)}&nbsp;m³<br>
+            ${new Date(d._time).toLocaleString('id-ID')}
+          </div>
+        </div>
+      </div>
+    `;
+
+    const label = L.marker([d.lat, d.lon], {
+      icon: L.divIcon({
+        className: '',
+        html: labelHTML,
+        iconAnchor: [0, 0]
+      })
+    })
     .on('click', () => {
-    map.flyTo([d.lat, d.lon], 18); // zoom to marker when clicked
+      map.flyTo([d.lat, d.lon], 18); // 🔹 klik label → zoom juga
+    });
+
+
+    // fungsi untuk set hover state
+    function setHover(active) {
+      const lbl = document.getElementById(`label-${d.device_id}`);
+      if (!lbl) return;
+
+      if (active) {
+        hoveredDevice = d.device_id;
+        lbl.classList.add('hovered');
+      } else if (hoveredDevice === d.device_id) {
+        hoveredDevice = null;
+        lbl.classList.remove('hovered');
+      }
+    }
+
+    marker.on('mouseover', () => setHover(true));
+    marker.on('mouseout', (e) => {
+      if (!e.originalEvent.relatedTarget || !e.originalEvent.relatedTarget.closest(`#label-${d.device_id}`)) {
+        setHover(false);
+      }
+    });
+
+    label.on('mouseover', () => setHover(true));
+    label.on('mouseout', (e) => {
+      if (!e.originalEvent.relatedTarget || !e.originalEvent.relatedTarget.closest('.leaflet-marker-icon')) {
+        setHover(false);
+      }
     });
 
     markerGroup.addLayer(marker);
-
-    
-
-    // Tooltip abu-abu semi transparan (seperti text box)
-    const labelHTML = `
-  <div style="
-    background-color: rgba(50, 50, 50, 0.8);
-    padding: 10px 14px;
-    border-radius: 6px;
-    color: white;
-    font-family: 'Segoe UI', sans-serif;
-    font-size: 13px;
-    box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
-    display: inline-block;
-    text-align: left;
-  ">
-    <div style="font-weight: bold; margin-bottom: 6px;">${d.device_id}</div>
-    <div style="display: flex;">
-      <div style="margin-right: 8px;">
-        Flowrate:<br>
-        Totalizer:<br>
-        Time:
-      </div>
-      <div>
-        ${d.Flowrate.toFixed(2)}&nbsp;l/s<br>
-        ${d.Totalizer.toFixed(0)}&nbsp;m³<br>
-        ${new Date(d._time).toLocaleString('id-ID')}
-      </div>
-    </div>
-  </div>
-`;
-
-
-
-
-const label = L.marker([d.lat, d.lon], {
-  icon: L.divIcon({
-    className: '',
-    html: labelHTML,
-    iconAnchor: [0, 0]  // posisikan ke kanan marker
-  })
-});
-
-
     markerGroup.addLayer(label);
     bounds.push([d.lat, d.lon]);
   });
 
   if (isFirstLoad && bounds.length > 0) {
-  window.initialBounds = L.latLngBounds(bounds); // ⬅️ simpan sebagai variabel global
-  map.fitBounds(initialBounds, {
-    paddingTopLeft: [50, 50],
-    paddingBottomRight: [50, 150] // sesuai kebutuhan spasi bawah
-  });
-  isFirstLoad = false;
+    window.initialBounds = L.latLngBounds(bounds);
+    map.fitBounds(initialBounds, {
+      paddingTopLeft: [50, 50],
+      paddingBottomRight: [50, 150]
+    });
+    isFirstLoad = false;
   }
 
 }
+
 
 
 
