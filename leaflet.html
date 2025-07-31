@@ -165,7 +165,7 @@
       if (window.initialBounds) {
         map.flyToBounds(window.initialBounds, {
           paddingTopLeft: [50, 50],
-          paddingBottomRight: [230, 150]
+          paddingBottomRight: [50, 150]
         });
       }
     };
@@ -350,7 +350,7 @@ async function updateMap() {
     window.initialBounds = L.latLngBounds(bounds);
     map.fitBounds(initialBounds, {
       paddingTopLeft: [50, 50],
-      paddingBottomRight: [230, 150]
+      paddingBottomRight: [50, 150]
     });
     isFirstLoad = false;
   }
