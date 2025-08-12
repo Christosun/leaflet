@@ -240,6 +240,34 @@ async function getData() {
   }));
 }
 
+// fungsi untuk set hover state
+function setHover(active, deviceId) {
+      document.querySelectorAll('.custom-label').forEach(el => {
+        el.classList.remove('hovered');
+        el.style.zIndex = 1;
+        if (el.closest('.leaflet-marker-icon')) {
+          el.closest('.leaflet-marker-icon').style.zIndex = ''; // reset
+        }
+      });
+
+      if (active) {
+        const lbl = document.getElementById(`label-${deviceId}`);
+        if (lbl) {
+          lbl.classList.add('hovered');
+          lbl.style.zIndex = 1000;
+
+          // Naikkan wrapper Leaflet-nya
+          const markerWrapper = lbl.closest('.leaflet-marker-icon');
+          if (markerWrapper) {
+            markerWrapper.style.zIndex = 9999;
+          }
+        }
+        hoveredDevice = deviceId;
+      } else {
+        hoveredDevice = null;
+        
+      }
+}
   
 async function updateMap() {
   const data = await getData();
@@ -297,28 +325,7 @@ async function updateMap() {
     .on('click', () => {
       map.flyTo([d.lat, d.lon], 18); // 🔹 klik label → zoom juga
     });
-
-
-    // fungsi untuk set hover state
-    function setHover(active, deviceId) {
-      document.querySelectorAll('.custom-label').forEach(el => {
-        el.classList.remove('hovered');
-        el.style.zIndex = 1; // reset semua ke belakang
-      });
-
-      if (active) {
-        const lbl = document.getElementById(`label-${deviceId}`);
-        if (lbl) {
-          lbl.classList.add('hovered');
-          lbl.style.zIndex = 1000; // yang di-hover ke depan
-        }
-        hoveredDevice = deviceId;
-      } else {
-        hoveredDevice = null;
-
-      }
-    }
-
+    
 
     marker.on('mouseover', () => setHover(true, d.device_id));
     marker.on('mouseout', (e) => {
@@ -355,9 +362,22 @@ async function updateMap() {
     isFirstLoad = false;
   }
 
+  // setelah semua marker+label selesai ditambahkan
+  if (hoveredDevice) {
+    setTimeout(() => {
+      const lbl = document.getElementById(`label-${hoveredDevice}`);
+      if (lbl) {
+        lbl.classList.add('hovered');
+        lbl.style.zIndex = 1000;
+        const markerWrapper = lbl.closest('.leaflet-marker-icon');
+        if (markerWrapper) {
+          markerWrapper.style.zIndex = 9999;
+        }
+      }
+    }, 0); // jalankan setelah DOM update
+  }
+
 }
-
-
 
 
 updateMap(); // pertama kali load
