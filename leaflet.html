@@ -4,14 +4,19 @@
   <title>Leaflet + InfluxDB</title>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Leaflet CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <!-- GestureHandling CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-gesture-handling/dist/leaflet-gesture-handling.min.css" />
+  
   <style>
     html, body {
-    margin: 0;
-    padding: 0;
-    height: 100%;
+      margin: 0;
+      padding: 0;
+      height: 100%;
     }
-
     #map { height: 100vh; }
     .legend {
       background: white;
@@ -22,14 +27,12 @@
       font-family: 'Segoe UI', sans-serif;
       min-width: 160px;
     }
-
     .legend-title {
       font-weight: bold;
       margin-bottom: 10px;
       font-size: 15px;
       color: #333;
     }
-
     .legend button {
       width: 100%;
       padding: 8px 10px;
@@ -46,11 +49,7 @@
       align-items: center;
       gap: 6px;
     }
-
-    .legend button:hover {
-      background-color: #e0e0e0;
-    }
-
+    .legend button:hover { background-color: #e0e0e0; }
     .leaflet-control-home {
       background-color: white;
       border: none;
@@ -66,11 +65,9 @@
       color: #333;
       margin-top: 10px;
     }
-    .leaflet-control-home:hover {
-      background-color: #f0f0f0;
-    }
+    .leaflet-control-home:hover { background-color: #f0f0f0; }
     .custom-label {
-      background: rgba(30, 30, 30, 0.7); /* transparan elegan */
+      background: rgba(30, 30, 30, 0.7);
       padding: 12px 16px;
       border-radius: 12px;
       color: #fff;
@@ -85,301 +82,241 @@
       backdrop-filter: blur(4px);
       min-width: 170px;
       position: relative;
-      z-index: 1; /* default semua di belakang */
+      z-index: 1;
     }
-
     .custom-label.hovered {
       transform: scale(1.15) translateY(-4px);
       box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
       border-color: rgba(255, 255, 255, 0.35);
-      z-index: 1000; /* hanya yang aktif di depan */
+      z-index: 1000;
     }
-
     .custom-label .device-id {
       font-weight: bold;
       font-size: 14px;
       margin-bottom: 8px;
-      color: #63e097; /* hijau neon */
+      color: #63e097;
     }
-
     .custom-label .info-row {
       display: flex;
       justify-content: space-between;
       margin-bottom: 4px;
     }
-
-    .custom-label .info-row:last-child {
-      margin-bottom: 0;
-    }
-
-    .custom-label .label {
-      color: #ddd;
-      font-weight: 500;
-    }
-
-    .custom-label .value {
-      font-weight: bold;
-      color: #fff;
-    }
-
-    
-
+    .custom-label .info-row:last-child { margin-bottom: 0; }
+    .custom-label .label { color: #ddd; font-weight: 500; }
+    .custom-label .value { font-weight: bold; color: #fff; }
   </style>
 </head>
 
 <body>
 <div id="map"></div>
 
+<!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- GestureHandling JS -->
+<script src="https://unpkg.com/leaflet-gesture-handling"></script>
+
 <script>
   const grayscale = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-  subdomains: 'abcd',
-  maxZoom: 19
+    subdomains: 'abcd',
+    maxZoom: 19
   });
 
-
-  const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    
-  });
+  const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
 
   const map = L.map('map', {
     scrollWheelZoom: false,
+    gestureHandling: true, // aktifkan gesture handling
     layers: [grayscale]
   }).setView([-2.5, 117], 5);
 
-  const baseMaps = {
-    "Grayscale": grayscale,
-    "Satellite": satellite
-  };
+  // Desktop: zoom hanya jika Ctrl ditekan
+  map.getContainer().addEventListener('wheel', function (e) {
+    if (e.ctrlKey) {
+      map.scrollWheelZoom.enable();
+    } else {
+      map.scrollWheelZoom.disable();
+    }
+  });
 
-  L.control.layers(baseMaps).addTo(map); // tambahkan kontrol layer dropdown
+  // Mobile: 1 jari scroll halaman, 2 jari gerakkan peta
+  if (/Mobi|Android/i.test(navigator.userAgent)) {
+    map.dragging.disable();
+    map.touchZoom.enable();
+    map.on('touchstart', function (e) {
+      if (e.touches.length === 2) {
+        map.dragging.enable();
+      } else {
+        map.dragging.disable();
+      }
+    });
+  }
+
+  const baseMaps = { "Grayscale": grayscale, "Satellite": satellite };
+  L.control.layers(baseMaps).addTo(map);
 
   const homeControl = L.Control.extend({
-  options: { position: 'topright' },
+    options: { position: 'topright' },
+    onAdd: function(map) {
+      const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-home');
+      container.innerHTML = '🔄';
+      container.onclick = function() {
+        if (window.initialBounds) {
+          map.flyToBounds(window.initialBounds, {
+            paddingTopLeft: [50, 50],
+            paddingBottomRight: [120, 150]
+          });
+        }
+      };
+      return container;
+    }
+  });
+  map.addControl(new homeControl());
 
-  onAdd: function(map) {
-    const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-home');
-    container.innerHTML = '🔄'; // bisa diganti dengan ikon SVG jika mau
+  const apiEndpoint = "https://backend.flotech.co.id/flowdata";
 
-    container.onclick = function() {
-      if (window.initialBounds) {
-        map.flyToBounds(window.initialBounds, {
-          paddingTopLeft: [50, 50],
-          paddingBottomRight: [120, 150]
-        });
-      }
-    };
+  const greenIcon = new L.Icon({
+    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    shadowSize: [41, 41]
+  });
 
-    return container;
-  }
-});
+  let markerGroup = L.layerGroup().addTo(map);
+  let isFirstLoad = true;
+  let hoveredDevice = null;
 
-map.addControl(new homeControl());
-
-const apiEndpoint = "https://backend.flotech.co.id/flowdata";
-
-const greenIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
-
-
-
-let markerGroup = L.layerGroup().addTo(map);
-let isFirstLoad = true;
-let hoveredDevice = null; // simpan device_id yang sedang di-hover
-
-
-
-// 📍 Lokasi tetap FM-xxx
   const deviceLocations = {
     "FM-001": [-6.146395, 106.894409],
     "FM-002": [-7.317843, 110.505299],
     "FM-003": [-0.949234, 122.790038],
-	"FM-004": [0.556127, 109.106046],
+    "FM-004": [0.556127, 109.106046],
     "FM-005": [-1.548447, 112.763312],
     "FM-006": [0.738251, 100.81298]
   };
 
-// 🧭 Buat legend pojok bawah
   const legend = L.control({position: 'bottomleft'});
   legend.onAdd = function(map) {
-  const div = L.DomUtil.create('div', 'legend');
-  div.innerHTML = `<div class="legend-title">Choose Location:</div>`;
-  for (const [key, val] of Object.entries(deviceLocations)) {
-    div.innerHTML += `<button onclick="zoomTo('${key}')">${key}</button>`;
-  }
-  return div;
-};
-
+    const div = L.DomUtil.create('div', 'legend');
+    div.innerHTML = `<div class="legend-title">Choose Location:</div>`;
+    for (const [key] of Object.entries(deviceLocations)) {
+      div.innerHTML += `<button onclick="zoomTo('${key}')">${key}</button>`;
+    }
+    return div;
+  };
   legend.addTo(map);
 
-  // 🔍 Fungsi zoom ke lokasi
   window.zoomTo = function(device_id) {
     const coords = deviceLocations[device_id];
     if (coords) map.flyTo(coords, 18);
   };
 
-async function getData() {
-  const res = await fetch(apiEndpoint);
-  const data = await res.json();
-
-  // filter dan susun ulang data jika perlu
-  return data.map(d => ({
-    device_id: d.device_id,
-    Flowrate: d.Flowrate,
-    Totalizer: d.Totalizer,
-    lat: d.lat,
-    lon: d.lon,
-    _time: d._time
-  }));
-}
-
-// fungsi untuk set hover state
-function setHover(active, deviceId) {
-      document.querySelectorAll('.custom-label').forEach(el => {
-        el.classList.remove('hovered');
-        el.style.zIndex = 1;
-        if (el.closest('.leaflet-marker-icon')) {
-          el.closest('.leaflet-marker-icon').style.zIndex = ''; // reset
-        }
-      });
-
-      if (active) {
-        const lbl = document.getElementById(`label-${deviceId}`);
-        if (lbl) {
-          lbl.classList.add('hovered');
-          lbl.style.zIndex = 1000;
-
-          // Naikkan wrapper Leaflet-nya
-          const markerWrapper = lbl.closest('.leaflet-marker-icon');
-          if (markerWrapper) {
-            markerWrapper.style.zIndex = 9999;
-          }
-        }
-        hoveredDevice = deviceId;
-      } else {
-        hoveredDevice = null;
-        
-      }
-}
-  
-async function updateMap() {
-  const data = await getData();
-  markerGroup.clearLayers();
-
-  const bounds = [];
-
-  data.forEach(d => {
-    if (!isFinite(d.lat) || !isFinite(d.lon)) return;
-
-    const marker = L.marker([d.lat, d.lon], { icon: greenIcon })
-      .on('click', () => {
-        map.flyTo([d.lat, d.lon], 18);
-      });
-
-    const labelHTML = `
-      <div class="custom-label ${hoveredDevice === d.device_id ? 'hovered' : ''}" 
-          id="label-${d.device_id}">
-        <div class="device-id">${d.device_id}</div>
-        <div class="info-row">
-          <span class="label">Flowrate:</span>
-          <span class="value">${d.Flowrate.toFixed(2)} l/s</span>
-        </div>
-        <div class="info-row">
-          <span class="label">Totalizer:</span>
-          <span class="value">${d.Totalizer.toFixed(0)} m³</span>
-        </div>
-        <div class="info-row">
-          <span class="label">Time:</span>
-          <span class="value">${
-            (() => {
-              const dt = new Date(d._time);
-              const day = dt.getDate();
-              const month = dt.getMonth() + 1;
-              const year = dt.getFullYear();
-              const hours = String(dt.getHours()).padStart(2, '0');
-              const minutes = String(dt.getMinutes()).padStart(2, '0');
-              const seconds = String(dt.getSeconds()).padStart(2, '0');
-              return `${day}/${month}/${year}, ${hours}:${minutes}:${seconds}`;
-            })()
-          }</span>
-
-        </div>
-      </div>
-    `;
-
-
-    const label = L.marker([d.lat, d.lon], {
-      icon: L.divIcon({
-        className: '',
-        html: labelHTML,
-        iconAnchor: [0, 0]
-      })
-    })
-    .on('click', () => {
-      map.flyTo([d.lat, d.lon], 18); // 🔹 klik label → zoom juga
-    });
-    
-
-    marker.on('mouseover', () => setHover(true, d.device_id));
-    marker.on('mouseout', (e) => {
-      if (
-        !e.originalEvent.relatedTarget ||
-        !e.originalEvent.relatedTarget.closest(`#label-${d.device_id}`)
-      ) {
-        setHover(false, d.device_id);
-      }
-    });
-
-    label.on('mouseover', () => setHover(true, d.device_id));
-    label.on('mouseout', (e) => {
-      if (
-        !e.originalEvent.relatedTarget ||
-        !e.originalEvent.relatedTarget.closest('.leaflet-marker-icon')
-      ) {
-        setHover(false, d.device_id);
-      }
-    });
-
-
-    markerGroup.addLayer(marker);
-    markerGroup.addLayer(label);
-    bounds.push([d.lat, d.lon]);
-  });
-
-  if (isFirstLoad && bounds.length > 0) {
-    window.initialBounds = L.latLngBounds(bounds);
-    map.fitBounds(initialBounds, {
-      paddingTopLeft: [50, 50],
-      paddingBottomRight: [120, 150]
-    });
-    isFirstLoad = false;
+  async function getData() {
+    const res = await fetch(apiEndpoint);
+    const data = await res.json();
+    return data.map(d => ({
+      device_id: d.device_id,
+      Flowrate: d.Flowrate,
+      Totalizer: d.Totalizer,
+      lat: d.lat,
+      lon: d.lon,
+      _time: d._time
+    }));
   }
 
-  // setelah semua marker+label selesai ditambahkan
-  if (hoveredDevice) {
-    setTimeout(() => {
-      const lbl = document.getElementById(`label-${hoveredDevice}`);
+  function setHover(active, deviceId) {
+    document.querySelectorAll('.custom-label').forEach(el => {
+      el.classList.remove('hovered');
+      el.style.zIndex = 1;
+      if (el.closest('.leaflet-marker-icon')) {
+        el.closest('.leaflet-marker-icon').style.zIndex = '';
+      }
+    });
+    if (active) {
+      const lbl = document.getElementById(`label-${deviceId}`);
       if (lbl) {
         lbl.classList.add('hovered');
         lbl.style.zIndex = 1000;
         const markerWrapper = lbl.closest('.leaflet-marker-icon');
-        if (markerWrapper) {
-          markerWrapper.style.zIndex = 9999;
-        }
+        if (markerWrapper) markerWrapper.style.zIndex = 9999;
       }
-    }, 0); // jalankan setelah DOM update
+      hoveredDevice = deviceId;
+    } else {
+      hoveredDevice = null;
+    }
   }
 
-}
+  async function updateMap() {
+    const data = await getData();
+    markerGroup.clearLayers();
+    const bounds = [];
 
+    data.forEach(d => {
+      if (!isFinite(d.lat) || !isFinite(d.lon)) return;
 
-updateMap(); // pertama kali load
-setInterval(updateMap, 5000); // auto-refresh tiap 5 detik
+      const marker = L.marker([d.lat, d.lon], { icon: greenIcon })
+        .on('click', () => map.flyTo([d.lat, d.lon], 18));
+
+      const labelHTML = `
+        <div class="custom-label ${hoveredDevice === d.device_id ? 'hovered' : ''}" 
+             id="label-${d.device_id}">
+          <div class="device-id">${d.device_id}</div>
+          <div class="info-row"><span class="label">Flowrate:</span><span class="value">${d.Flowrate.toFixed(2)} l/s</span></div>
+          <div class="info-row"><span class="label">Totalizer:</span><span class="value">${d.Totalizer.toFixed(0)} m³</span></div>
+          <div class="info-row"><span class="label">Time:</span><span class="value">${
+            (() => {
+              const dt = new Date(d._time);
+              return `${dt.getDate()}/${dt.getMonth() + 1}/${dt.getFullYear()}, ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}:${String(dt.getSeconds()).padStart(2,'0')}`;
+            })()
+          }</span></div>
+        </div>
+      `;
+
+      const label = L.marker([d.lat, d.lon], {
+        icon: L.divIcon({ className: '', html: labelHTML, iconAnchor: [0, 0] })
+      }).on('click', () => map.flyTo([d.lat, d.lon], 18));
+
+      marker.on('mouseover', () => setHover(true, d.device_id))
+            .on('mouseout', e => {
+              if (!e.originalEvent.relatedTarget || !e.originalEvent.relatedTarget.closest(`#label-${d.device_id}`)) {
+                setHover(false, d.device_id);
+              }
+            });
+
+      label.on('mouseover', () => setHover(true, d.device_id))
+           .on('mouseout', e => {
+             if (!e.originalEvent.relatedTarget || !e.originalEvent.relatedTarget.closest('.leaflet-marker-icon')) {
+               setHover(false, d.device_id);
+             }
+           });
+
+      markerGroup.addLayer(marker);
+      markerGroup.addLayer(label);
+      bounds.push([d.lat, d.lon]);
+    });
+
+    if (isFirstLoad && bounds.length > 0) {
+      window.initialBounds = L.latLngBounds(bounds);
+      map.fitBounds(initialBounds, { paddingTopLeft: [50, 50], paddingBottomRight: [120, 150] });
+      isFirstLoad = false;
+    }
+
+    if (hoveredDevice) {
+      setTimeout(() => {
+        const lbl = document.getElementById(`label-${hoveredDevice}`);
+        if (lbl) {
+          lbl.classList.add('hovered');
+          lbl.style.zIndex = 1000;
+          const markerWrapper = lbl.closest('.leaflet-marker-icon');
+          if (markerWrapper) markerWrapper.style.zIndex = 9999;
+        }
+      }, 0);
+    }
+  }
+
+  updateMap();
+  setInterval(updateMap, 5000);
 </script>
+</body>
+</html>
