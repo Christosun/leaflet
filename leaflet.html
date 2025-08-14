@@ -4,85 +4,61 @@
   <title>Leaflet + InfluxDB</title>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
-  <!-- Leaflet CSS -->
+
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  
-  <!-- GestureHandling CSS -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet-gesture-handling/dist/leaflet-gesture-handling.min.css" />
-  
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-    }
+    html, body { margin: 0; padding: 0; height: 100%; }
     #map { height: 100vh; }
     .legend {
-      background: white;
-      padding: 14px;
-      font-size: 14px;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-      font-family: 'Segoe UI', sans-serif;
+      background: white; padding: 14px; font-size: 14px; border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15); font-family: 'Segoe UI', sans-serif;
       min-width: 160px;
     }
-    .legend-title {
-      font-weight: bold;
-      margin-bottom: 10px;
-      font-size: 15px;
-      color: #333;
-    }
+    .legend-title { font-weight: bold; margin-bottom: 10px; font-size: 15px; color: #333; }
     .legend button {
-      width: 100%;
-      padding: 8px 10px;
-      margin-bottom: 6px;
-      background-color: #f2f2f2;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      text-align: left;
-      font-size: 13px;
-      color: #333;
-      transition: background-color 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      width: 100%; padding: 8px 10px; margin-bottom: 6px; background-color: #f2f2f2;
+      border: none; border-radius: 6px; cursor: pointer; text-align: left;
+      font-size: 13px; color: #333; display: flex; align-items: center; gap: 6px;
     }
     .legend button:hover { background-color: #e0e0e0; }
+
     .leaflet-control-home {
-      background-color: white;
-      border: none;
-      border-radius: 4px;
+      background-color: white; border: none; border-radius: 4px;
       box-shadow: 0 1px 5px rgba(0,0,0,0.65);
-      width: 45px;
-      height: 45px;
-      line-height: 45px;
-      text-align: center;
-      cursor: pointer;
-      font-size: 30px;
-      font-weight: bold;
-      color: #333;
-      margin-top: 10px;
+      width: 45px; height: 45px; line-height: 45px; text-align: center;
+      cursor: pointer; font-size: 30px; font-weight: bold; color: #333; margin-top: 10px;
     }
     .leaflet-control-home:hover { background-color: #f0f0f0; }
+
+    /* Switch button */
+    .switch-control {
+      background: white; padding: 8px 12px; border-radius: 20px; display: flex; align-items: center;
+      gap: 8px; font-family: 'Segoe UI', sans-serif; font-size: 13px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    .switch {
+      position: relative; display: inline-block; width: 40px; height: 20px;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc; transition: .4s; border-radius: 20px;
+    }
+    .slider:before {
+      position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px;
+      background-color: white; transition: .4s; border-radius: 50%;
+    }
+    input:checked + .slider { background-color: #4CAF50; }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    /* Label besar */
     .custom-label {
-      background: rgba(30, 30, 30, 0.7);
-      padding: 12px 16px;
-      border-radius: 12px;
-      color: #fff;
-      font-family: 'Segoe UI', sans-serif;
-      font-size: 13px;
+      background: rgba(30, 30, 30, 0.7); padding: 12px 16px; border-radius: 12px;
+      color: #fff; font-family: 'Segoe UI', sans-serif; font-size: 13px;
       box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35);
-      display: inline-block;
-      text-align: left;
-      transform: scale(1);
-      transition: all 0.25s ease;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(4px);
-      min-width: 170px;
-      position: relative;
-      z-index: 1;
+      border: 1px solid rgba(255, 255, 255, 0.15); backdrop-filter: blur(4px);
+      min-width: 170px; position: relative; z-index: 1;
+      transition: all 0.25s ease; /* Smooth animasi hover */
     }
     .custom-label.hovered {
       transform: scale(1.15) translateY(-4px);
@@ -91,178 +67,186 @@
       z-index: 1000;
     }
     .custom-label .device-id {
-      font-weight: bold;
-      font-size: 14px;
-      margin-bottom: 8px;
-      color: #63e097;
+      font-weight: bold; font-size: 14px; margin-bottom: 8px; color: #ffffff;
     }
-    .custom-label .info-row {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 4px;
-    }
+    .custom-label .info-row { display: flex; justify-content: space-between; margin-bottom: 4px; }
     .custom-label .info-row:last-child { margin-bottom: 0; }
     .custom-label .label { color: #ddd; font-weight: 500; }
     .custom-label .value { font-weight: bold; color: #fff; }
+
+    /* Mini label */
+    .mini-label {
+    display: inline-block;          /* Pastikan background mengikuti panjang teks */
+    font-weight: bold;
+    font-size: 11px;
+    padding: 4px 8px;                /* Tambah padding supaya teks tidak mepet */
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+    color: #333;
+    white-space: nowrap;             /* Supaya teks tidak turun ke baris baru */
+    line-height: 1.2em;               /* Tinggi baris pas */
+    font-family: 'Segoe UI', sans-serif;
+  }
   </style>
 </head>
-
 <body>
 <div id="map"></div>
 
-<!-- Leaflet JS -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<!-- GestureHandling JS -->
 <script src="https://unpkg.com/leaflet-gesture-handling"></script>
-
 <script>
-  const grayscale = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    subdomains: 'abcd',
-    maxZoom: 19
-  });
+  //const grayscale = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:19});
+  //const grayscale = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+  //    maxZoom: 20,
+  //    attribution: '&copy; <a href="https://www.google.com/intl/id/permissions/geoguidelines/">Google Map</a>'
+  //});
+  const grayscale = L.tileLayer(`https://mts1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}`);
 
   const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
 
-  const map = L.map('map', {
-    scrollWheelZoom: false,
-    gestureHandling: true, // aktifkan gesture handling
-    layers: [grayscale]
-  }).setView([-2.5, 117], 5);
+  // Dark map elegan (Carto Dark Matter)
+  const darkmaps = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png');
 
-  // Desktop: zoom hanya jika Ctrl ditekan
-  map.getContainer().addEventListener('wheel', function (e) {
-    if (e.ctrlKey) {
-      map.scrollWheelZoom.enable();
-    } else {
-      map.scrollWheelZoom.disable();
-    }
-  });
+  const map = L.map('map',{scrollWheelZoom:false,gestureHandling:true,layers:[grayscale]}).setView([-2.5, 117], 5);
 
-  // Mobile: 1 jari scroll halaman, 2 jari gerakkan peta
-  if (/Mobi|Android/i.test(navigator.userAgent)) {
-    map.dragging.disable();
-    map.touchZoom.enable();
-    map.on('touchstart', function (e) {
-      if (e.touches.length === 2) {
-        map.dragging.enable();
-      } else {
-        map.dragging.disable();
-      }
-    });
+  // Ctrl+scroll zoom
+  map.getContainer().addEventListener('wheel', e => { if(e.ctrlKey){map.scrollWheelZoom.enable()} else {map.scrollWheelZoom.disable()} });
+
+  // Mobile two-finger drag
+  if(/Mobi|Android/i.test(navigator.userAgent)){
+    map.dragging.disable(); map.touchZoom.enable();
+    map.on('touchstart', e => { if(e.touches.length===2){map.dragging.enable()} else {map.dragging.disable()} });
   }
 
-  const baseMaps = { "Grayscale": grayscale, "Satellite": satellite };
+  const baseMaps = { "Grayscale": grayscale, "Satellite": satellite, "Dark Maps": darkmaps };
   L.control.layers(baseMaps).addTo(map);
 
+  // Home button
   const homeControl = L.Control.extend({
-    options: { position: 'topright' },
-    onAdd: function(map) {
-      const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-home');
+    options:{position:'topright'},
+    onAdd:function(map){
+      const container = L.DomUtil.create('div','leaflet-bar leaflet-control leaflet-control-home');
       container.innerHTML = '🔄';
-      container.onclick = function() {
-        if (window.initialBounds) {
-          map.flyToBounds(window.initialBounds, {
-            paddingTopLeft: [50, 50],
-            paddingBottomRight: [120, 150]
-          });
-        }
-      };
+      container.onclick=function(){
+        if(window.initialBounds){ map.flyToBounds(window.initialBounds,{paddingTopLeft:[50,50],paddingBottomRight:[120,150]}); }
+      }
       return container;
     }
   });
   map.addControl(new homeControl());
 
-  const apiEndpoint = "https://backend.flotech.co.id/flowdata";
+  // Switch control
+  const switchControl = L.Control.extend({
+    options:{position:'topright'},
+    onAdd:function(map){
+      const div = L.DomUtil.create('div','switch-control');
+      div.innerHTML = `
+        <label class="switch">
+          <input type="checkbox" id="labelSwitch" checked>
+          <span class="slider"></span>
+        </label>
+        <span id="switchLabel">Labels ON</span>
+      `;
+      L.DomEvent.disableClickPropagation(div);
+      return div;
+    }
+  });
+  map.addControl(new switchControl());
 
   const greenIcon = new L.Icon({
-    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
+    iconUrl:'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
+    shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    iconSize:[25,41], iconAnchor:[12,41], popupAnchor:[1,-34], shadowSize:[41,41]
   });
 
-  let markerGroup = L.layerGroup().addTo(map);
-  let isFirstLoad = true;
-  let hoveredDevice = null;
+  let isFirstLoad=true, hoveredDevice=null;
+  let markerGroup=L.layerGroup().addTo(map);
+  let labelGroup=L.layerGroup().addTo(map);
+  let miniLabelGroup=L.layerGroup().addTo(map);
+  let labelsVisible=true;
 
-  const deviceLocations = {
-    "FM-001": [-0.57969, 117.08502],
-    "FM-002": [-0.860054, 117.21362],
-    "FM-003": [-0.427323, 117.009778],
-    "FM-004": [-0.3285, 116.83249],
-    "FM-005": [-0.859934, 117.213516],
-    "FM-006": [-0.4083402, 116.9902031],
-    "FM-007": [-0.52148, 116.41944],
-    "FM-008": [0.567008, 116.017198]
+  const deviceLocations={
+    "FM-001":[-0.57969,117.08502],
+    "FM-002":[-0.860054,117.21362],
+    "FM-003":[-0.427323,117.009778],
+    "FM-004":[-0.3285,116.83249],
+    "FM-005":[-0.859934,117.213516],
+    "FM-006":[-0.4083402,116.9902031],
+    "FM-007":[-0.52148,116.41944],
+    "FM-008":[0.567008,116.017198]
   };
 
-  const legend = L.control({position: 'bottomleft'});
-  legend.onAdd = function(map) {
-    const div = L.DomUtil.create('div', 'legend');
+  // Legend
+  const legend = L.control({position:'bottomleft'});
+  legend.onAdd = function(map){
+    const div = L.DomUtil.create('div','legend');
     div.innerHTML = `<div class="legend-title">Choose Location:</div>`;
-    for (const [key] of Object.entries(deviceLocations)) {
+    for(const key of Object.keys(deviceLocations)){
       div.innerHTML += `<button onclick="zoomTo('${key}')">${key}</button>`;
     }
     return div;
   };
   legend.addTo(map);
+  window.zoomTo=function(id){const c=deviceLocations[id]; if(c) map.flyTo(c,18);};
 
-  window.zoomTo = function(device_id) {
-    const coords = deviceLocations[device_id];
-    if (coords) map.flyTo(coords, 18);
-  };
-
-  async function getData() {
-    const res = await fetch(apiEndpoint);
+  async function getData(){
+    const res = await fetch("https://backend.flotech.co.id/flowdata");
     const data = await res.json();
-    return data.map(d => ({
-      device_id: d.device_id,
-      Flowrate: d.Flowrate,
-      Totalizer: d.Totalizer,
-      lat: d.lat,
-      lon: d.lon,
-      _time: d._time
-    }));
+    return data.map(d=>({device_id:d.device_id,Flowrate:d.Flowrate,Totalizer:d.Totalizer,lat:d.lat,lon:d.lon,_time:d._time}));
   }
 
-  function setHover(active, deviceId) {
+  let isHoverLocked = false; // tanda kalau mouse masih di atas label/marker
+
+  function setHover(active, id) {
+    if (active) {
+      hoveredDevice = id;
+      isHoverLocked = true;
+    } else {
+      hoveredDevice = null;
+      isHoverLocked = false;
+    }
+
     document.querySelectorAll('.custom-label').forEach(el => {
       el.classList.remove('hovered');
       el.style.zIndex = 1;
-      if (el.closest('.leaflet-marker-icon')) {
+      if (el.closest('.leaflet-marker-icon'))
         el.closest('.leaflet-marker-icon').style.zIndex = '';
-      }
     });
+
     if (active) {
-      const lbl = document.getElementById(`label-${deviceId}`);
+      const lbl = document.getElementById(`label-${id}`);
       if (lbl) {
         lbl.classList.add('hovered');
         lbl.style.zIndex = 1000;
         const markerWrapper = lbl.closest('.leaflet-marker-icon');
         if (markerWrapper) markerWrapper.style.zIndex = 9999;
       }
-      hoveredDevice = deviceId;
-    } else {
-      hoveredDevice = null;
     }
   }
 
-  async function updateMap() {
+  async function updateMap(){
     const data = await getData();
-    markerGroup.clearLayers();
-    const bounds = [];
+    markerGroup.clearLayers(); labelGroup.clearLayers(); miniLabelGroup.clearLayers();
+    const bounds=[];
 
-    data.forEach(d => {
-      if (!isFinite(d.lat) || !isFinite(d.lon)) return;
+    data.forEach(d=>{
+      if(!isFinite(d.lat)||!isFinite(d.lon)) return;
 
-      const marker = L.marker([d.lat, d.lon], { icon: greenIcon })
-        .on('click', () => map.flyTo([d.lat, d.lon], 18));
+      const marker=L.marker([d.lat,d.lon],{icon:greenIcon})
+        .on('mouseover',()=>setHover(true,d.device_id))
+        .on('mouseout',e=>{
+          if(!e.originalEvent.relatedTarget || !e.originalEvent.relatedTarget.closest(`#label-${d.device_id}`)){
+            setHover(false,d.device_id);
+          }
+        })
+        .on('click', () => { // ✅ klik marker -> zoom
+          map.flyTo([d.lat, d.lon], 18);
+        });
 
-      const labelHTML = `
-        <div class="custom-label ${hoveredDevice === d.device_id ? 'hovered' : ''}" 
-             id="label-${d.device_id}">
+      const labelHTML=`
+        <div class="custom-label" id="label-${d.device_id}">
           <div class="device-id">${d.device_id}</div>
           <div class="info-row"><span class="label">Flowrate:</span><span class="value">${d.Flowrate.toFixed(2)} l/s</span></div>
           <div class="info-row"><span class="label">Totalizer:</span><span class="value">${d.Totalizer.toFixed(0)} m³</span></div>
@@ -274,51 +258,68 @@
           }</span></div>
         </div>
       `;
-
       const label = L.marker([d.lat, d.lon], {
         icon: L.divIcon({ className: '', html: labelHTML, iconAnchor: [0, 0] })
-      }).on('click', () => map.flyTo([d.lat, d.lon], 18));
+      })
+        .on('mouseover', () => setHover(true, d.device_id))
+        .on('mouseout', () => setHover(false, d.device_id))
+        .on('click', () => { // ✅ klik label -> zoom
+          map.flyTo([d.lat, d.lon], 18);
+        });
 
-      marker.on('mouseover', () => setHover(true, d.device_id))
-            .on('mouseout', e => {
-              if (!e.originalEvent.relatedTarget || !e.originalEvent.relatedTarget.closest(`#label-${d.device_id}`)) {
-                setHover(false, d.device_id);
-              }
-            });
+      // Label kecil
+      const miniLabel = L.marker([d.lat, d.lon], {
+        icon: L.divIcon({
+          className: '',
+          html: `<div class="mini-label">${d.device_id}</div>`,
+          iconAnchor: [28, 0]
+        })
+      })
+        .on('click', () => { // ✅ klik label kecil -> zoom
+          map.flyTo([d.lat, d.lon], 18);
+        });
 
-      label.on('mouseover', () => setHover(true, d.device_id))
-           .on('mouseout', e => {
-             if (!e.originalEvent.relatedTarget || !e.originalEvent.relatedTarget.closest('.leaflet-marker-icon')) {
-               setHover(false, d.device_id);
-             }
-           });
 
       markerGroup.addLayer(marker);
-      markerGroup.addLayer(label);
-      bounds.push([d.lat, d.lon]);
+      labelGroup.addLayer(label);
+      miniLabelGroup.addLayer(miniLabel);
+      bounds.push([d.lat,d.lon]);
     });
 
-    if (isFirstLoad && bounds.length > 0) {
-      window.initialBounds = L.latLngBounds(bounds);
-      map.fitBounds(initialBounds, { paddingTopLeft: [50, 50], paddingBottomRight: [120, 150] });
-      isFirstLoad = false;
+    if(!labelsVisible){ map.removeLayer(labelGroup); map.addLayer(miniLabelGroup); }
+    else { map.addLayer(labelGroup); map.removeLayer(miniLabelGroup); }
+
+    if(isFirstLoad && bounds.length>0){
+      window.initialBounds=L.latLngBounds(bounds);
+      map.fitBounds(initialBounds,{paddingTopLeft:[50,50],paddingBottomRight:[120,150]});
+      isFirstLoad=false;
     }
 
-    if (hoveredDevice) {
-      setTimeout(() => {
-        const lbl = document.getElementById(`label-${hoveredDevice}`);
-        if (lbl) {
-          lbl.classList.add('hovered');
-          lbl.style.zIndex = 1000;
-          const markerWrapper = lbl.closest('.leaflet-marker-icon');
-          if (markerWrapper) markerWrapper.style.zIndex = 9999;
-        }
-      }, 0);
+    // restore hover jika mouse masih di atas label/marker
+    if (isHoverLocked && hoveredDevice) {
+      setHover(true, hoveredDevice);
     }
   }
 
+
+  // Switch toggle
+  document.addEventListener('change',e=>{
+    if(e.target.id==='labelSwitch'){
+      labelsVisible=e.target.checked;
+      document.getElementById('switchLabel').innerText = labelsVisible ? 'Labels ON' : 'Labels OFF';
+      if(labelsVisible){ map.addLayer(labelGroup); map.removeLayer(miniLabelGroup); }
+      else { map.removeLayer(labelGroup); map.addLayer(miniLabelGroup); }
+    }
+  });
+
+  // Restore hover state setelah refresh
+  if (hoveredDevice) {
+    setHover(true, hoveredDevice);
+  }
+
+
   updateMap();
-  setInterval(updateMap, 5000);
+  setInterval(updateMap,5000);
 </script>
 </body>
 </html>
