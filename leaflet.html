@@ -95,7 +95,7 @@
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/leaflet-gesture-handling"></script>
+
 <script>
   //const grayscale = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:19});
   //const grayscale = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
@@ -112,7 +112,7 @@
   const map = L.map('map',{scrollWheelZoom:false,gestureHandling:true,layers:[grayscale]}).setView([-2.5, 117], 5);
 
   // Ctrl+scroll zoom
-  map.getContainer().addEventListener('wheel', e => { if(e.ctrlKey){map.scrollWheelZoom.enable()} else {map.scrollWheelZoom.disable()} });
+  //map.getContainer().addEventListener('wheel', e => { if(e.ctrlKey){map.scrollWheelZoom.enable()} else {map.scrollWheelZoom.disable()} });
 
   // Mobile two-finger drag
   if(/Mobi|Android/i.test(navigator.userAgent)){
