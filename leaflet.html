@@ -123,6 +123,19 @@
     overflow: hidden;
     display: none;
     z-index: 9998;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+  
+  #chatContainer.show {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+  }
+  #chatContainer.hide {
+    opacity: 0;
+    transform: translateY(20px);
   }
   #chatContainer iframe {
     width: 100%;
@@ -144,12 +157,21 @@
   const chatBox = document.getElementById("chatContainer");
 
   chatBtn.addEventListener("click", () => {
-    if (chatBox.style.display === "none" || chatBox.style.display === "") {
-      chatBox.style.display = "block";
+    if (!chatBox.classList.contains("show")) {
+      chatBox.style.display = "block"; // Pastikan terlihat dulu
+      setTimeout(() => {
+        chatBox.classList.remove("hide");
+        chatBox.classList.add("show");
+      }, 10); // beri sedikit jeda agar transition jalan
     } else {
-      chatBox.style.display = "none";
+      chatBox.classList.remove("show");
+      chatBox.classList.add("hide");
+      setTimeout(() => {
+        chatBox.style.display = "none";
+      }, 300); // sesuai durasi transition
     }
   });
+
 </script>
 
 
@@ -262,40 +284,6 @@
     const data = await res.json();
     return data.map(d=>({device_id:d.device_id,Flowrate:d.Flowrate,Totalizer:d.Totalizer,lat:d.lat,lon:d.lon,_time:d._time}));
   }
-
-  // Tambahkan kontrol custom di pojok kanan bawah
-  const coordControl = L.control({ position: 'bottomright' });
-
-  coordControl.onAdd = function(map) {
-    const div = L.DomUtil.create('div', 'coord-control');
-    div.innerHTML = 'Lat: - , Lng: - , Zoom: ' + map.getZoom();
-    div.style.background = 'rgba(255,255,255,0.9)';
-    div.style.padding = '4px 8px';
-    div.style.borderRadius = '4px';
-    div.style.fontSize = '11px';
-    div.style.fontFamily = 'Segoe UI, sans-serif';
-    div.style.color = '#333';
-    div.style.boxShadow = '0 1px 4px rgba(0,0,0,0.2)';
-    return div;
-  };
-
-  coordControl.addTo(map);
-
-  // Update koordinat saat mouse bergerak
-  map.on('mousemove', function(e) {
-    document.querySelector('.coord-control').innerHTML = 
-      'Lat: ' + e.latlng.lat.toFixed(5) + 
-      ', Lng: ' + e.latlng.lng.toFixed(5) + 
-      ', Zoom: ' + map.getZoom();
-  });
-
-  // Update zoom saat peta di-zoom
-  map.on('zoomend', function() {
-    const text = document.querySelector('.coord-control').innerHTML;
-    const parts = text.split(', Zoom:');
-    document.querySelector('.coord-control').innerHTML = 
-      parts[0] + ', Zoom: ' + map.getZoom();
-  });
   
   let isHoverLocked = false; // tanda kalau mouse masih di atas label/marker
 
