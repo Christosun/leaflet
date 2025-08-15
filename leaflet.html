@@ -114,7 +114,7 @@
   const map = L.map('map',{scrollWheelZoom:false,gestureHandling:true,layers:[grayscale]}).setView([-2.5, 117], 5);
 
   // Ctrl+scroll zoom
-  //map.getContainer().addEventListener('wheel', e => { if(e.ctrlKey){map.scrollWheelZoom.enable()} else {map.scrollWheelZoom.disable()} });
+  map.getContainer().addEventListener('wheel', e => { if(e.ctrlKey){map.scrollWheelZoom.enable()} else {map.scrollWheelZoom.disable()} });
 
   // Mobile two-finger drag
   if(/Mobi|Android/i.test(navigator.userAgent)){
