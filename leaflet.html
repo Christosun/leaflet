@@ -162,24 +162,42 @@
   const chatBtn = document.getElementById("chatButton");
   const chatBox = document.getElementById("chatContainer");
 
-  chatBtn.addEventListener("click", () => {
+  function openChat() {
+    chatBox.style.display = "block";
+    setTimeout(() => {
+      chatBox.classList.remove("hide");
+      chatBox.classList.add("show");
+    }, 10);
+  }
+
+  function closeChat() {
+    chatBox.classList.remove("show");
+    chatBox.classList.add("hide");
+    setTimeout(() => {
+      chatBox.style.display = "none";
+    }, 300);
+  }
+
+  chatBtn.addEventListener("click", (e) => {
+    e.stopPropagation(); // biar klik tombol gak dianggap klik di luar
     if (!chatBox.classList.contains("show")) {
-      chatBox.style.display = "block"; // Pastikan terlihat dulu
-      setTimeout(() => {
-        chatBox.classList.remove("hide");
-        chatBox.classList.add("show");
-      }, 10); // beri sedikit jeda agar transition jalan
+      openChat();
     } else {
-      chatBox.classList.remove("show");
-      chatBox.classList.add("hide");
-      setTimeout(() => {
-        chatBox.style.display = "none";
-      }, 300); // sesuai durasi transition
+      closeChat();
     }
   });
 
+  // Tutup jika klik di luar
+  document.addEventListener("click", (e) => {
+    if (
+      chatBox.classList.contains("show") &&  // chat lagi terbuka
+      !chatBox.contains(e.target) &&         // klik bukan di dalam chat
+      e.target !== chatBtn                   // klik bukan tombol chat
+    ) {
+      closeChat();
+    }
+  });
 </script>
-
 
 </head>
 <body>
