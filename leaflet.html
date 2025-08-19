@@ -306,18 +306,40 @@
     "FM-010":[-0.59382,117.03557]
   };
 
+  let deviceStatus = {}; // 🔹 simpan data terakhir tiap device
+
   // Legend
   const legend = L.control({position:'bottomleft'});
   legend.onAdd = function(map){
     const div = L.DomUtil.create('div','legend');
     div.innerHTML = `<div class="legend-title">Choose Location:</div>`;
-    for(const key of Object.keys(deviceLocations)){
-      div.innerHTML += `<button onclick="zoomTo('${key}')">${key}</button>`;
-    }
+    // 🔹 buat container isi (supaya bisa diupdate berkala)
+    div.innerHTML += `<div id="legendContent"></div>`;
     return div;
   };
   legend.addTo(map);
   window.zoomTo=function(id){const c=deviceLocations[id]; if(c) map.flyTo(c,18);};
+
+   // 🔹 fungsi untuk update isi legend
+function updateLegend() {
+  const container = document.getElementById("legendContent");
+  if (!container) return;
+  container.innerHTML = "";
+
+  Object.keys(deviceLocations).forEach(id => {
+    const status = deviceStatus[id] || {};
+    const isOnline = status._time && (Date.now() - new Date(status._time).getTime() < 60000);
+
+    const color = isOnline ? "limegreen" : "red";
+
+    container.innerHTML += `
+      <button onclick="zoomTo('${id}')">
+        <span style="width:10px;height:10px;border-radius:50%;background:${color};display:inline-block;margin-right:6px;"></span>
+        ${id}
+      </button>
+    `;
+  });
+}
 
   async function getData(){
     const res = await fetch("https://backend.flotech.co.id/flowdata");
@@ -356,6 +378,11 @@
 
   async function updateMap(){
     const data = await getData();
+    // 🔹 simpan status device
+    data.forEach(d => { deviceStatus[d.device_id] = d; });
+
+    // 🔹 update legend setiap refresh data
+    updateLegend();
     markerGroup.clearLayers(); labelGroup.clearLayers(); miniLabelGroup.clearLayers();
     const bounds=[];
 
