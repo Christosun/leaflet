@@ -7,6 +7,7 @@
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet-gesture-handling/dist/leaflet-gesture-handling.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   <style>
     html, body { margin: 0; padding: 0; height: 100%; }
     #map { height: 100vh; }
@@ -25,9 +26,14 @@
 
     .leaflet-control-home {
       background: rgba(30, 30, 30, 0.7); border: none; border-radius: 4px;
-      box-shadow: 0 1px 5px rgba(0,0,0,0.65);
-      width: 45px; height: 45px; line-height: 45px; text-align: center;
-      cursor: pointer; font-size: 30px; font-weight: bold; color: #333; margin-top: 10px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.65); width: 45px; height: 45px;
+      display: flex; align-items: center; justify-content: center; cursor: pointer; margin-top: 10px;
+    }
+
+    .leaflet-control-home i {
+      font-size: 22px;
+      color: #ffffff;   /* 🔹 ganti warna sesukamu */
+      transition: color 0.3s ease;
     }
     .leaflet-control-home:hover { background-color: #474646; }
 
@@ -143,6 +149,17 @@
   #chatContainer iframe {
     width: 100%; height: 100%; border: none;
   }
+  /* Tambahan animasi interaktif */
+  #chatButton.active {
+    background: rgba(30, 30, 30, 0.7); /* abu saat aktif */
+    transform: scale(1) rotate(360deg);
+    font-size: 22px;
+    color: #ffffff;
+    transition: all 0.3s ease;
+  }
+  #chatButton.active:hover {
+    background-color: #474646;
+  }
 
   /* Tombol Zoom (+ dan -) */
   .leaflet-control-zoom a {
@@ -163,7 +180,36 @@
   .leaflet-control-layers-list {
     color: #fff;
   }
+  /* Batasi tinggi legend content agar hanya 10 tombol terlihat */
+    #legendContent {
+    max-height: 370px;      /* cukup untuk 10 tombol */
+    overflow-y: auto;       /* aktifkan scroll */
+    padding-right: 4px;     /* kasih sedikit ruang biar teks tidak mepet scrollbar */
+  }
 
+  /* Custom scrollbar elegan */
+  #legendContent::-webkit-scrollbar {
+    width: 6px;             /* slim */
+  }
+
+  #legendContent::-webkit-scrollbar-track {
+    background: transparent; /* track transparan */
+  }
+
+  #legendContent::-webkit-scrollbar-thumb {
+    background: rgba(180, 180, 180, 0.6);  /* abu-abu */
+    border-radius: 4px;                     /* rounded */
+  }
+
+  #legendContent::-webkit-scrollbar-thumb:hover {
+    background: rgba(150, 150, 150, 0.9);   /* lebih gelap saat hover */
+  }
+
+  /* Firefox support */
+  #legendContent {
+    scrollbar-width: thin;                  /* slim */
+    scrollbar-color: rgba(180,180,180,0.6) transparent;
+  }
 </style>
 
 <!-- Tombol chat -->
@@ -184,6 +230,10 @@
       chatBox.classList.remove("hide");
       chatBox.classList.add("show");
     }, 10);
+
+    // Ubah tombol jadi aktif
+    chatBtn.classList.add("active");
+    chatBtn.innerHTML = '<i class="fas fa-chevron-down"></i>';
   }
 
   function closeChat() {
@@ -192,10 +242,14 @@
     setTimeout(() => {
       chatBox.style.display = "none";
     }, 300);
+
+    // Kembalikan tombol ke semula
+    chatBtn.classList.remove("active");
+    chatBtn.textContent = "🤔";
   }
 
   chatBtn.addEventListener("click", (e) => {
-    e.stopPropagation(); // biar klik tombol gak dianggap klik di luar
+    e.stopPropagation();
     if (!chatBox.classList.contains("show")) {
       openChat();
     } else {
@@ -206,9 +260,9 @@
   // Tutup jika klik di luar
   document.addEventListener("click", (e) => {
     if (
-      chatBox.classList.contains("show") &&  // chat lagi terbuka
-      !chatBox.contains(e.target) &&         // klik bukan di dalam chat
-      e.target !== chatBtn                   // klik bukan tombol chat
+      chatBox.classList.contains("show") &&
+      !chatBox.contains(e.target) &&
+      e.target !== chatBtn
     ) {
       closeChat();
     }
@@ -251,17 +305,20 @@
 
   // Home button
   const homeControl = L.Control.extend({
-    options:{position:'topright'},
-    onAdd:function(map){
-      const container = L.DomUtil.create('div','leaflet-bar leaflet-control leaflet-control-home');
-      container.innerHTML = '🔄';
-      container.onclick=function(){
-        if(window.initialBounds){ map.flyToBounds(window.initialBounds,{paddingTopLeft:[50,50],paddingBottomRight:[120,150]}); }
+    options: { position: 'topright' },
+    onAdd: function(map) {
+      const container = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-home');
+      container.innerHTML = '<i class="fas fa-rotate"></i>';  // 🔹 FontAwesome icon
+      container.onclick = function() {
+        if (window.initialBounds) {
+          map.flyToBounds(window.initialBounds, { paddingTopLeft: [50, 50], paddingBottomRight: [120, 150] });
+        }
       }
       return container;
     }
   });
   map.addControl(new homeControl());
+
 
   // Switch control
   const switchControl = L.Control.extend({
@@ -303,7 +360,9 @@
     "FM-007":[-0.52148,116.41944],
     "FM-008":[0.567008,116.017198],
     "FM-009":[-0.111113,117.436818],
-    "FM-010":[-0.59382,117.03557]
+    "FM-010":[-0.59382,117.03557],
+    "FM-011":[0.138653,116.376306],
+    "FM-012":[-0.009895,116.415856]
   };
 
   let deviceStatus = {}; // 🔹 simpan data terakhir tiap device
