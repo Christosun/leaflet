@@ -311,7 +311,7 @@
       container.innerHTML = '<i class="fas fa-rotate"></i>';  // 🔹 FontAwesome icon
       container.onclick = function() {
         if (window.initialBounds) {
-          map.flyToBounds(window.initialBounds, { paddingTopLeft: [50, 50], paddingBottomRight: [120, 150] });
+          map.flyToBounds(window.initialBounds, { paddingTopLeft: [50, 50], paddingBottomRight: [120, 150], duration: 1.5 });
         }
       }
       return container;
@@ -381,7 +381,7 @@
     return div;
   };
   legend.addTo(map);
-  window.zoomTo=function(id){const c=deviceLocations[id]; if(c) map.flyTo(c,18);};
+  window.zoomTo=function(id){const c=deviceLocations[id]; if(c) map.flyTo(c,18,{ duration: 1.5 });};
 
    // 🔹 fungsi untuk update isi legend
 function updateLegend() {
@@ -460,7 +460,7 @@ function updateLegend() {
           }
         })
         .on('click', () => { // ✅ klik marker -> zoom
-          map.flyTo([d.lat, d.lon], 18);
+          map.flyTo([d.lat, d.lon], 18, { duration: 1.5 });
         });
 
       const labelHTML=`
@@ -482,7 +482,7 @@ function updateLegend() {
         .on('mouseover', () => setHover(true, d.device_id))
         .on('mouseout', () => setHover(false, d.device_id))
         .on('click', () => { // ✅ klik label -> zoom
-          map.flyTo([d.lat, d.lon], 18);
+          map.flyTo([d.lat, d.lon], 18, { duration: 1.5 });
         });
 
       // Label kecil
@@ -494,7 +494,7 @@ function updateLegend() {
         })
       })
         .on('click', () => { // ✅ klik label kecil -> zoom
-          map.flyTo([d.lat, d.lon], 18);
+          map.flyTo([d.lat, d.lon], 18, { duration: 1.5 });
         });
 
 
