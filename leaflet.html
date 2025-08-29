@@ -104,10 +104,11 @@
     background: rgba(30, 30, 30, 0.7);
     border: none;
     border-radius: 50%;
-    width: 60px;
-    height: 60px;
-    font-size: 40px;           /* 🔹 Membesarkan emoji */
-    line-height: 60px;         /* 🔹 Pastikan emoji vertikalnya center */
+    width: 45px;
+    height: 45px;
+    font-size: 22px;           /* 🔹 Membesarkan emoji */
+    color: #ffffff;
+    line-height: auto;         /* 🔹 Pastikan emoji vertikalnya center */
     text-align: center;        /* 🔹 Horizontal center */
     display: flex;
     align-items: center;
@@ -125,7 +126,7 @@
   /* Iframe chat */
   #chatContainer {
     position: fixed;
-    bottom: 90px;
+    bottom: 80px;
     right: 20px;
     width: 400px;
     height: 500px;
@@ -133,32 +134,60 @@
     border-radius: 10px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     overflow: hidden;
-    display: none;
     z-index: 9998;
     opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.5s ease, transform 0.5s ease;
+    transform: translateY(100px);
+    visibility: hidden;   /* default tersembunyi */
   }
-  
+
+  /* buka */
   #chatContainer.show {
-    display: block; opacity: 1; transform: translateY(0);
+    visibility: visible;
+    animation: slideUpBounce 0.6s ease forwards;
   }
+
+  /* tutup */
   #chatContainer.hide {
-    opacity: 0; transform: translateY(20px);
+    animation: slideDownFade 0.4s ease forwards;
   }
+
+  @keyframes slideUpBounce {
+    0%   { opacity: 0; transform: translateY(100%); }
+    60%  { opacity: 1; transform: translateY(-20px); }
+    80%  { transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slideDownFade {
+    0%   { opacity: 1; transform: translateY(0); visibility: visible; }
+    99%  { opacity: 0; transform: translateY(100%); visibility: visible; }
+    100% { opacity: 0; transform: translateY(100%); visibility: hidden; }
+  }
+
   #chatContainer iframe {
     width: 100%; height: 100%; border: none;
   }
+  
   /* Tambahan animasi interaktif */
+  @keyframes pop {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(0.8); }
+    100% { transform: scale(1); }
+  }
   #chatButton.active {
-    background: rgba(30, 30, 30, 0.7); /* abu saat aktif */
-    transform: scale(1) rotate(360deg);
+    background: rgba(30, 30, 30, 0.7);
     font-size: 22px;
     color: #ffffff;
-    transition: all 0.3s ease;
+    animation: pop 0.5s ease-out; /* sekali muter */
   }
   #chatButton.active:hover {
     background-color: #474646;
+  }
+  #chatButton.closing {
+    background: rgba(30, 30, 30, 0.7);
+    font-size: 22px;
+    color: #ffffff;
+    animation: pop 0.5s ease-out; /* juga muter saat balik */
   }
 
   /* Tombol Zoom (+ dan -) */
@@ -213,7 +242,7 @@
 </style>
 
 <!-- Tombol chat -->
-<button id="chatButton">🤔</button>
+<button id="chatButton"><i class="fa-solid fa-message"></i></button>
 
 <!-- Kontainer chat -->
 <div id="chatContainer">
@@ -224,28 +253,39 @@
   const chatBtn = document.getElementById("chatButton");
   const chatBox = document.getElementById("chatContainer");
 
+  function restartAnimation(el, className) {
+    el.classList.remove(className);
+    // trigger reflow supaya animasi bisa restart
+    void el.offsetWidth;
+    el.classList.add(className);
+  }
+
+  chatBox.addEventListener("animationend", (e) => {
+    if (e.animationName === "slideDownFade") {
+      chatBox.style.display = "none";   // baru disembunyikan setelah animasi selesai
+    }
+    if (e.animationName === "slideUpBounce") {
+      chatBox.style.display = "block";  // pastikan visible setelah buka
+    }
+  });
+
   function openChat() {
     chatBox.style.display = "block";
-    setTimeout(() => {
-      chatBox.classList.remove("hide");
-      chatBox.classList.add("show");
-    }, 10);
+    chatBox.classList.remove("hide");
+    chatBox.classList.add("show");
 
-    // Ubah tombol jadi aktif
-    chatBtn.classList.add("active");
     chatBtn.innerHTML = '<i class="fas fa-chevron-down"></i>';
+    chatBtn.classList.remove("closing");
+    restartAnimation(chatBtn, "active");
   }
 
   function closeChat() {
     chatBox.classList.remove("show");
     chatBox.classList.add("hide");
-    setTimeout(() => {
-      chatBox.style.display = "none";
-    }, 300);
 
-    // Kembalikan tombol ke semula
+    chatBtn.innerHTML = '<i class="fa-solid fa-message"></i>';
     chatBtn.classList.remove("active");
-    chatBtn.textContent = "🤔";
+    restartAnimation(chatBtn, "closing");
   }
 
   chatBtn.addEventListener("click", (e) => {
