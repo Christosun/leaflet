@@ -383,6 +383,11 @@
     shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
     iconSize:[22,35], iconAnchor:[11,35], popupAnchor:[1,-28], shadowSize:[35,35]
   });
+  const redIcon = new L.Icon({
+    iconUrl:'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+    shadowUrl:'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    iconSize:[22,35], iconAnchor:[11,35], popupAnchor:[1,-28], shadowSize:[35,35]
+  });
 
   let isFirstLoad=true, hoveredDevice=null;
   let markerGroup=L.layerGroup().addTo(map);
@@ -492,14 +497,18 @@ function updateLegend() {
     data.forEach(d=>{
       if(!isFinite(d.lat)||!isFinite(d.lon)) return;
 
-      const marker=L.marker([d.lat,d.lon],{icon:greenIcon})
+      // ✅ cek apakah device online (< 1 menit)
+      const isOnline = d._time && (Date.now() - new Date(d._time).getTime() < 60000);
+      const icon = isOnline ? greenIcon : redIcon;
+
+      const marker=L.marker([d.lat,d.lon],{icon})
         .on('mouseover',()=>setHover(true,d.device_id))
         .on('mouseout',e=>{
           if(!e.originalEvent.relatedTarget || !e.originalEvent.relatedTarget.closest(`#label-${d.device_id}`)){
             setHover(false,d.device_id);
           }
         })
-        .on('click', () => { // ✅ klik marker -> zoom
+        .on('click', () => { 
           map.flyTo([d.lat, d.lon], 18);
         });
 
