@@ -239,6 +239,31 @@
     scrollbar-width: thin;                  /* slim */
     scrollbar-color: rgba(180,180,180,0.6) transparent;
   }
+  /* Blinking merah untuk marker offline */
+  .blinking-marker {
+    animation: blinkMarker 1s infinite;
+  }
+  @keyframes blinkMarker {
+    0%   { filter: brightness(0.5) saturate(0.5); }
+    50%  { filter: brightness(1.5) saturate(2); }
+    100% { filter: brightness(0.5) saturate(0.5); }
+  }
+
+  /* Blinking merah untuk bulatan legend offline */
+  .blinking-dot {
+    animation: blinkDot 1s infinite;
+  }
+  @keyframes blinkDot {
+    0%,100% { background: red; }
+    50%     { background: darkred; }
+  }
+  .legend.flowrate {
+    width: 75%;
+    font-size: 11px;   /* 🔹 perkecil teks legend flowrate */
+    line-height: 1.3em; /* 🔹 rapatkan jarak antar baris */
+  }
+
+
 </style>
 
 <!-- Tombol chat -->
@@ -317,11 +342,6 @@
 <!-- <script src="https://unpkg.com/leaflet-gesture-handling"></script> -->
 
 <script>
-  //const grayscale = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:19});
-  //const grayscale = L.tileLayer('https://mt1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-  //    maxZoom: 20,
-  //    attribution: '&copy; <a href="https://www.google.com/intl/id/permissions/geoguidelines/">Google Map</a>'
-  //});
   const grayscale = L.tileLayer(`https://mts1.google.com/vt/lyrs=m&x={x}&y={y}&z={z}`);
 
   const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}');
@@ -329,7 +349,7 @@
   // Dark map elegan (Carto Dark Matter)
   const darkmaps = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png');
 
-  const map = L.map('map',{scrollWheelZoom:false,gestureHandling:true,layers:[grayscale]}).setView([-2.5, 117], 5);
+  const map = L.map('map',{scrollWheelZoom:false,gestureHandling:true,layers:[grayscale],zoomControl:false}).setView([-2.5, 117], 5);
 
   // Ctrl+scroll zoom
   map.getContainer().addEventListener('wheel', e => { if(e.ctrlKey){map.scrollWheelZoom.enable()} else {map.scrollWheelZoom.disable()} });
@@ -358,7 +378,6 @@
     }
   });
   map.addControl(new homeControl());
-
 
   // Switch control
   const switchControl = L.Control.extend({
@@ -417,7 +436,7 @@
   let deviceStatus = {}; // 🔹 simpan data terakhir tiap device
 
   // Legend
-  const legend = L.control({position:'bottomleft'});
+  const legend = L.control({position:'topleft'});
   legend.onAdd = function(map){
     const div = L.DomUtil.create('div','legend');
     div.innerHTML = `<div class="legend-title">CHOOSE LOCATION:</div>`;
@@ -425,29 +444,82 @@
     div.innerHTML += `<div id="legendContent"></div>`;
     return div;
   };
-  legend.addTo(map);
+
+  const flowLegend = L.control({ position: 'bottomleft' });
+  flowLegend.onAdd = function(map) {
+  const div = L.DomUtil.create('div', 'legend flowrate');
+  div.innerHTML = `
+    <div style="color:white"><span style="color:red;">🔴</span> Low flow: &lt; 10 l/s</div>
+    <div style="color:white"><span style="color:gold;">🟡</span> Medium flow: &lt; 50 l/s</div>
+    <div style="color:white"><span style="color:limegreen;">🟢</span> High flow: &lt; 100 l/s</div>
+    <div style="color:white"><span style="color:deepskyblue;">🔵</span> Very high flow: ≥ 200 l/s</div>
+    <div style="color:white"><span style="color:red;">🔴</span> Red blinking: Offline</div>
+  `;
+  return div;
+};
+
   window.zoomTo=function(id){const c=deviceLocations[id]; if(c) map.flyTo(c,18);};
+  legend.addTo(map);
+  flowLegend.addTo(map);
 
-   // 🔹 fungsi untuk update isi legend
-function updateLegend() {
-  const container = document.getElementById("legendContent");
-  if (!container) return;
-  container.innerHTML = "";
+  function getFlowIcon(flowrate, isOnline) {
+    let color = "green"; // default
+    
+    if (flowrate < 10) color = "red";       // Low
+    else if (flowrate < 50) color = "yellow";
+    else if (flowrate < 100) color = "green";
+    else if (flowrate >= 200) color = "blue";
 
-  Object.keys(deviceLocations).forEach(id => {
-    const status = deviceStatus[id] || {};
-    const isOnline = status._time && (Date.now() - new Date(status._time).getTime() < 60000);
+    // Kalau offline → blinking merah
+    if (!isOnline) {
+      return L.divIcon({
+        className: 'blinking-marker',
+        html: `<img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png"
+                style="width:22px;height:35px;" />`,
+        iconAnchor: [11, 35]
+      });
+    }
 
-    const color = isOnline ? "limegreen" : "red";
+    // Marker normal dengan warna kategori
+    const urlMap = {
+      red: "marker-icon-2x-red.png",
+      yellow: "marker-icon-2x-yellow.png",
+      green: "marker-icon-2x-green.png",
+      blue: "marker-icon-2x-blue.png"
+    };
 
-    container.innerHTML += `
+    return new L.Icon({
+      iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/${urlMap[color]}`,
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+      iconSize: [22, 35], iconAnchor: [11, 35], popupAnchor: [1, -28], shadowSize: [35, 35]
+    });
+  }
+
+  // 🔹 fungsi untuk update isi legend
+  function updateLegend() {
+    const container = document.getElementById("legendContent");
+    if (!container) return;
+    container.innerHTML = "";
+
+    Object.keys(deviceLocations).forEach(id => {
+      const status = deviceStatus[id] || {};
+      const isOnline = status._time && (Date.now() - new Date(status._time).getTime() < 60000);
+
+      container.innerHTML += `
       <button onclick="zoomTo('${id}')">
-        <span style="width:10px;height:10px;border-radius:50%;background:${color};display:inline-block;margin-right:6px;"></span>
+        <span 
+          class="${isOnline ? '' : 'blinking-dot'}"
+          style="
+            width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:6px;
+            ${isOnline ? 'background:limegreen;' : ''}
+          ">
+        </span>
         ${id}
       </button>
     `;
-  });
-}
+
+    });
+  }
 
   async function getData(){
     const res = await fetch("https://backend.flotech.co.id/flowdata");
@@ -499,18 +571,11 @@ function updateLegend() {
 
       // ✅ cek apakah device online (< 1 menit)
       const isOnline = d._time && (Date.now() - new Date(d._time).getTime() < 60000);
-      const icon = isOnline ? greenIcon : redIcon;
-
-      const marker=L.marker([d.lat,d.lon],{icon})
+      const icon = getFlowIcon(d.Flowrate, isOnline);
+      const marker = L.marker([d.lat,d.lon], { icon })
         .on('mouseover',()=>setHover(true,d.device_id))
-        .on('mouseout',e=>{
-          if(!e.originalEvent.relatedTarget || !e.originalEvent.relatedTarget.closest(`#label-${d.device_id}`)){
-            setHover(false,d.device_id);
-          }
-        })
-        .on('click', () => { 
-          map.flyTo([d.lat, d.lon], 18);
-        });
+        .on('mouseout',()=>setHover(false,d.device_id))
+        .on('click', () => { map.flyTo([d.lat, d.lon], 18); });
 
       const labelHTML=`
         <div class="custom-label" id="label-${d.device_id}">
