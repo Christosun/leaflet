@@ -453,7 +453,7 @@
     <div style="color:white"><span style="color:red;">🔴</span> Low flow: &lt; 10 l/s</div>
     <div style="color:white"><span style="color:gold;">🟡</span> Medium flow: &lt; 50 l/s</div>
     <div style="color:white"><span style="color:limegreen;">🟢</span> High flow: &lt; 100 l/s</div>
-    <div style="color:white"><span style="color:deepskyblue;">🔵</span> Very high flow: ≥ 200 l/s</div>
+    <div style="color:white"><span style="color:deepskyblue;">🔵</span> Very high flow: ≥ 100 l/s</div>
     <div style="color:white"><span style="color:red;">🔴</span> Red blinking: Device offline</div>
   `;
   return div;
@@ -469,7 +469,7 @@
     if (flowrate < 10) color = "red";       // Low
     else if (flowrate < 50) color = "yellow";
     else if (flowrate < 100) color = "green";
-    else if (flowrate >= 200) color = "blue";
+    else if (flowrate >= 100) color = "blue";
 
     // Kalau offline → blinking merah
     if (!isOnline) {
