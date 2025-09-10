@@ -25,7 +25,7 @@
     .legend button:hover { background-color: #474646; }
 
     .leaflet-control-home {
-      background: rgba(30, 30, 30, 0.7); border: none; border-radius: 4px;
+      background: rgba(30, 30, 30, 0.7); border: none !important; border-radius: 12px;
       box-shadow: 0 1px 5px rgba(0,0,0,0.65); width: 45px; height: 45px;
       display: flex; align-items: center; justify-content: center; cursor: pointer; margin-top: 10px;
     }
@@ -40,7 +40,7 @@
     /* Switch button */
     .switch-control {
       background: rgba(30, 30, 30, 0.7); padding: 8px 12px; border-radius: 20px; display: flex; align-items: center;
-      gap: 8px; font-family: 'Segoe UI', sans-serif; font-weight: bold; font-size: 12px; color: #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      gap: 8px; font-family: 'Segoe UI', sans-serif; font-size: 12px; color: #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     }
     .switch {
       position: relative; display: inline-block; width: 40px; height: 20px;
@@ -198,17 +198,78 @@
     background-color: #474646 !important;
   }
   /* Tombol Layer (kotak pojok kanan atas) */
-  .leaflet-control-layers {
+  /*.leaflet-control-layers {
     background-color: rgba(30, 30, 30, 0.7) !important; border-radius: 6px !important; border: none !important;
   }
   .leaflet-control-layers:hover {
     background-color: #474646 !important;
-  }
+  }*/
 
   /* Untuk teks di dalam layer switcher */
+  /*.leaflet-control-layers-list {
+    color: #fff;
+  }*/
+
+  /* Layer switcher modern */
+  .leaflet-control-layers {
+    background: rgba(30, 30, 30, 0.75) !important;
+    border-radius: 12px !important;
+    border: none !important;
+    padding: 8px !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    backdrop-filter: blur(6px);
+    font-family: 'Segoe UI', sans-serif;
+  }
+
+  /* Hilangkan list default */
   .leaflet-control-layers-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* Style tombol layer */
+  .leaflet-control-layers-selector {
+    display: none; /* sembunyikan radio button */
+  }
+
+  .leaflet-control-layers-base label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 6px 0;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    background: rgba(255,255,255,0.05);
+    transition: all 0.25s ease;
+    font-size: 12px;
     color: #fff;
   }
+
+  .leaflet-control-layers-base label:hover {
+    background: rgba(255,255,255,0.15);
+    transform: translateX(4px);
+  }
+
+  /* Icon berbeda per layer */
+  .leaflet-control-layers-base label span.icon {
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    background: rgba(255,255,255,0.15);
+    font-size: 12px;
+  }
+
+  /* Style saat aktif */
+  .leaflet-control-layers-base input:checked + span {
+    font-weight: bold;
+    color: #4CAF50;
+  }
+
   /* Batasi tinggi legend content agar hanya 10 tombol terlihat */
     #legendContent {
     max-height: 370px;      /* cukup untuk 10 tombol */
@@ -361,8 +422,14 @@
     map.on('touchstart', e => { if(e.touches.length===2){map.dragging.enable()} else {map.dragging.disable()} });
   }
 
-  const baseMaps = { "Grayscale": grayscale, "Satellite": satellite, "Dark Maps": darkmaps };
-  L.control.layers(baseMaps).addTo(map);
+  //const baseMaps = { "Grayscale": grayscale, "Satellite": satellite, "Dark Maps": darkmaps };
+  //L.control.layers(baseMaps).addTo(map);
+  const baseMaps = {
+    "<span class='icon'><i class='fa-solid fa-map'></i></span> Grayscale": grayscale,
+    "<span class='icon'><i class='fa-solid fa-globe'></i></span> Satellite": satellite,
+    "<span class='icon'><i class='fa-solid fa-moon'></i></span> Dark Maps": darkmaps
+  };
+  L.control.layers(baseMaps, null, { collapsed: false }).addTo(map);
 
   // Home button
   const homeControl = L.Control.extend({
@@ -378,7 +445,7 @@
       return container;
     }
   });
-  map.addControl(new homeControl());
+  
 
   // Switch control
   const switchControl = L.Control.extend({
@@ -390,13 +457,14 @@
           <input type="checkbox" id="labelSwitch" checked>
           <span class="slider"></span>
         </label>
-        <span id="switchLabel">Labels ON</span>
+        <span id="switchLabel">Label ON</span>
       `;
       L.DomEvent.disableClickPropagation(div);
       return div;
     }
   });
   map.addControl(new switchControl());
+  map.addControl(new homeControl());
 
   const greenIcon = new L.Icon({
     iconUrl:'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
@@ -637,7 +705,7 @@
   document.addEventListener('change',e=>{
     if(e.target.id==='labelSwitch'){
       labelsVisible=e.target.checked;
-      document.getElementById('switchLabel').innerText = labelsVisible ? 'Labels ON' : 'Labels OFF';
+      document.getElementById('switchLabel').innerText = labelsVisible ? 'Label ON' : 'Label OFF';
       if(labelsVisible){ map.addLayer(labelGroup); map.removeLayer(miniLabelGroup); }
       else { map.removeLayer(labelGroup); map.addLayer(miniLabelGroup); }
     }
