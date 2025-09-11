@@ -14,19 +14,19 @@
     .legend {
       background: rgba(30, 30, 30, 0.7); padding: 14px; font-size: 14px; border-radius: 8px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.15); font-family: 'Segoe UI', sans-serif;
-      min-width: 160px;
+      min-width: 160px; backdrop-filter: blur(4px);
     }
     .legend-title { font-weight: bold; margin-bottom: 10px; font-size: 12px; color: #ffffff; }
     .legend button {
       width: 100%; padding: 8px 10px; margin-bottom: 6px; background-color: rgba(29, 28, 28, 0.7);
-      border: none; border-radius: 6px; cursor: pointer; text-align: left;
+      border: none; border-radius: 6px; cursor: pointer; text-align: left; transition: all 0.25s ease;
       font-size: 11px; color: #ffffff; display: flex; align-items: center; gap: 6px;
     }
-    .legend button:hover { background-color: #474646; }
+    .legend button:hover { background: rgba(255,255,255,0.15); transform: translateX(4px); }
 
     .leaflet-control-home {
       background: rgba(30, 30, 30, 0.7); border: none !important; border-radius: 12px;
-      box-shadow: 0 1px 5px rgba(0,0,0,0.65); width: 45px; height: 45px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.65); width: 45px; height: 45px; backdrop-filter: blur(4px);
       display: flex; align-items: center; justify-content: center; cursor: pointer; margin-top: 10px;
     }
 
@@ -39,7 +39,7 @@
 
     /* Switch button */
     .switch-control {
-      background: rgba(30, 30, 30, 0.7); padding: 8px 12px; border-radius: 20px; display: flex; align-items: center;
+      background: rgba(30, 30, 30, 0.7); backdrop-filter: blur(4px); padding: 8px 12px; border-radius: 20px; display: flex; align-items: center;
       gap: 8px; font-family: 'Segoe UI', sans-serif; font-size: 12px; color: #ffffff; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     }
     .switch {
@@ -100,9 +100,9 @@
     #chatButton {
     position: fixed;
     bottom: 20px;
-    right: 20px;
+    right: 10px;
     background: rgba(30, 30, 30, 0.7);
-    border: none;
+    border: none; backdrop-filter: blur(4px);
     border-radius: 50%;
     width: 45px;
     height: 45px;
@@ -127,7 +127,7 @@
   #chatContainer {
     position: fixed;
     bottom: 80px;
-    right: 20px;
+    right: 10px;
     width: 400px;
     height: 500px;
     background: white;
@@ -180,6 +180,9 @@
     color: #ffffff;
     animation: pop 0.5s ease-out; /* sekali muter */
   }
+  .leaflet-control-home.active {
+    animation: pop 0.5s ease-out;
+  }
   #chatButton.active:hover {
     background-color: #474646;
   }
@@ -212,12 +215,12 @@
 
   /* Layer switcher modern */
   .leaflet-control-layers {
-    background: rgba(30, 30, 30, 0.75) !important;
+    background: rgba(30, 30, 30, 0.7) !important;
     border-radius: 12px !important;
     border: none !important;
+    backdrop-filter: blur(4px);
     padding: 8px !important;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    backdrop-filter: blur(6px);
     font-family: 'Segoe UI', sans-serif;
   }
 
@@ -241,7 +244,7 @@
     padding: 8px 10px;
     border-radius: 8px;
     cursor: pointer;
-    background: rgba(255,255,255,0.05);
+    background: rgba(29, 28, 28, 0.7);
     transition: all 0.25s ease;
     font-size: 12px;
     color: #fff;
@@ -271,7 +274,7 @@
   }
 
   /* Batasi tinggi legend content agar hanya 10 tombol terlihat */
-    #legendContent {
+  #legendContent {
     max-height: 370px;      /* cukup untuk 10 tombol */
     overflow-y: auto;       /* aktifkan scroll */
     padding-right: 4px;     /* kasih sedikit ruang biar teks tidak mepet scrollbar */
@@ -441,7 +444,8 @@
         if (window.initialBounds) {
           map.flyToBounds(window.initialBounds, { paddingTopLeft: [50, 50], paddingBottomRight: [120, 150]});
         }
-      }
+        restartAnimation(container, "active");
+      };
       return container;
     }
   });
