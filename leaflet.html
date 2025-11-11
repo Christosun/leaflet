@@ -124,6 +124,7 @@
   }
 
   /* Iframe chat */
+  /*
   #chatContainer {
     position: fixed;
     bottom: 80px;
@@ -137,19 +138,20 @@
     z-index: 9998;
     opacity: 0;
     transform: translateY(100px);
-    visibility: hidden;   /* default tersembunyi */
+    visibility: hidden;   
   }
 
-  /* buka */
+
   #chatContainer.show {
     visibility: visible;
     animation: slideUpBounce 0.6s ease forwards;
   }
 
-  /* tutup */
+  
   #chatContainer.hide {
     animation: slideDownFade 0.4s ease forwards;
   }
+
 
   @keyframes slideUpBounce {
     0%   { opacity: 0; transform: translateY(100%); }
@@ -167,31 +169,34 @@
   #chatContainer iframe {
     width: 100%; height: 100%; border: none;
   }
-  
+  */
+
   /* Tambahan animasi interaktif */
   @keyframes pop {
     0%   { transform: scale(1); }
     40%  { transform: scale(0.8); }
     100% { transform: scale(1); }
   }
-  #chatButton.active {
+  /*#chatButton.active {
     background: rgba(30, 30, 30, 0.7);
     font-size: 22px;
     color: #ffffff;
-    animation: pop 0.5s ease-out; /* sekali muter */
+    animation: pop 0.5s ease-out; 
   }
+  */
   .leaflet-control-home.active {
     animation: pop 0.5s ease-out;
   }
-  #chatButton.active:hover {
+  /*#chatButton.active:hover {
     background-color: #474646;
   }
   #chatButton.closing {
     background: rgba(30, 30, 30, 0.7);
     font-size: 22px;
     color: #ffffff;
-    animation: pop 0.5s ease-out; /* juga muter saat balik */
+    animation: pop 0.5s ease-out; 
   }
+  */
 
   /* Tombol Zoom (+ dan -) */
   .leaflet-control-zoom a {
@@ -275,7 +280,7 @@
 
   /* Batasi tinggi legend content agar hanya 10 tombol terlihat */
   #legendContent {
-    max-height: 370px;      /* cukup untuk 10 tombol */
+    max-height: 300px;      /* cukup untuk 10 tombol */
     overflow-y: auto;       /* aktifkan scroll */
     padding-right: 4px;     /* kasih sedikit ruang biar teks tidak mepet scrollbar */
   }
@@ -330,11 +335,10 @@
 
 
 </style>
+<!--
 
-<!-- Tombol chat -->
 <button id="chatButton"><i class="fa-solid fa-message"></i></button>
 
-<!-- Kontainer chat -->
 <div id="chatContainer">
   <iframe src="https://christosun.github.io/chatbot/chatbot.html"></iframe>
 </div>
@@ -398,6 +402,7 @@
     }
   });
 </script>
+-->
 
 </head>
 <body>
