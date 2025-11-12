@@ -524,7 +524,7 @@
   const legend = L.control({position:'topleft'});
   legend.onAdd = function(map){
     const div = L.DomUtil.create('div','legend');
-    div.innerHTML = `<div class="legend-title">CHOOSE LOCATION:</div>`;
+    div.innerHTML = `<div class="legend-title">LOCATION LIST:</div>`;
     // 🔹 buat container isi (supaya bisa diupdate berkala)
     div.innerHTML += `<div id="legendContent"></div>`;
     return div;
